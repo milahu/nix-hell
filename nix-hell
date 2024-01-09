@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+
+# welcome to nix hell
+
+# greetings to anyone, who is spitting in the face of the social darwinists
+
+# author: Milan Hauth <milahu@gmail.com>
+
+# license: MIT License
+
+
+
+# set NIX_HELL_LEVEL
+
+# https://github.com/NixOS/nix/issues/6677#issuecomment-1211644204
+# I sometimes nest nix shells (either nix-shell or nix shell),
+# so I was thinking we could have a counter like $NIX_SHELL_LEVEL,
+# similar to the standard $SHLVL.
+
+if [ -n "$NIX_HELL_LEVEL" ]; then
+  NIX_HELL_LEVEL=$((NIX_HELL_LEVEL + 1))
+else
+  NIX_HELL_LEVEL=1
+fi
+
+# level suffix for prompt string
+lvlsuf=
+if [[ "$NIX_HELL_LEVEL" != "1" ]]; then
+  lvlsuf=".$NIX_HELL_LEVEL"
+fi
+
+
+
+# set prompt string
+
+# based on /etc/bashrc
+
+PS1=
+
+# Provide a nice prompt if the terminal supports it.
+if [ "$TERM" != "dumb" ] || [ -n "$INSIDE_EMACS" ]; then
+  PROMPT_COLOR="1;31m"
+  ((UID)) && PROMPT_COLOR="1;32m"
+  ps="\u@nix-hell"
+  ps="nix-hell"
+  ps="nix-hell$lvlsuf"
+  if [ -n "$INSIDE_EMACS" ]; then
+    # Emacs term mode doesn't support xterm title escape sequence (\e]0;)
+    #PS1="\n\[\033[$PROMPT_COLOR\][\u@\h:\w]\\$\[\033[0m\] "
+    PS1="\n\[\033[$PROMPT_COLOR\]$ps \w] \\$\[\033[0m\] "
+  elif [ "$TERM" = "xterm" ]; then
+    #PS1="\[\033]2;\h:\u:\w\007\]$PS1"
+    PS1="\[\033]2;$ps:\w\007\]$PS1"
+  else
+    #PS1="\n\[\033[$PROMPT_COLOR\][\[\e]0;\u@\h: \w\a\]\u@\h:\w]\\$\[\033[0m\] "
+    PS1="\n\[\033[$PROMPT_COLOR\]\[\e]0;$ps: \w\a\]$ps \w \\$\[\033[0m\] "
+  fi
+fi
+
+# https://unix.stackexchange.com/a/729431/295986
+export PROMPT_COMMAND="
+  export PS1=${PS1@Q};
+  export NIX_HELL_LEVEL=${NIX_HELL_LEVEL@Q};
+  unset PROMPT_COMMAND
+"
+
+
+
+exec nix-shell "$@"
